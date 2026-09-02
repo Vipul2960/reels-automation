@@ -50,11 +50,14 @@ class KeepAwake:
         return False
 
 
-def read_links(args_links: list[str], links_file: Path | None) -> list[str]:
+def read_links(args_links: list[str], links_file: Path | None) -> list[dict]:
     """Collect URLs from the command line and/or a text file, de-duplicated.
 
     The file is read loosely: one per line, blank lines and #comments ignored,
     and a URL is picked out of any surrounding text so a pasted list works.
+
+    Returns the same shape as prompt_links so the caller treats both alike;
+    `clips` is None here, meaning "use the run-wide default".
     """
     raw: list[str] = list(args_links or [])
     if links_file and links_file.exists():
@@ -70,32 +73,133 @@ def read_links(args_links: list[str], links_file: Path | None) -> list[str]:
         tidy = clean_url(url.strip().strip('"').strip("'"))
         if tidy and tidy not in seen:
             seen.add(tidy)
-            out.append(tidy)
+            out.append({"url": tidy, "clips": None})
     return out
 
 
-def prompt_links() -> list[str]:
-    """Ask for links right here, one per line, until a blank line.
+def probe(url: str) -> dict | None:
+    """Title and duration without downloading anything. Takes a second or two."""
+    import yt_dlp
 
-    Pasting into the terminal beats editing a file: a multi-line paste arrives
-    as several lines and each is taken as its own link, so a whole list can go
-    in at once.
+    class _Silent:
+        """yt-dlp prints its own ERROR line otherwise; we report failures."""
+        def debug(self, msg): pass
+        def info(self, msg): pass
+        def warning(self, msg): pass
+        def error(self, msg): pass
+
+    try:
+        with yt_dlp.YoutubeDL({"quiet": True, "no_warnings": True,
+                               "skip_download": True, "noplaylist": True,
+                               "logger": _Silent()}) as ydl:
+            info = ydl.extract_info(url, download=False)
+        if info.get("_type") == "playlist":
+            entries = [e for e in (info.get("entries") or []) if e]
+            if not entries:
+                return None
+            info = entries[0]
+        return {"title": info.get("title", ""),
+                "duration": float(info.get("duration") or 0)}
+    except Exception:
+        return None
+
+
+def suggest_clips(seconds: float) -> tuple[int, int, str]:
+    """(suggested, ceiling, why) for a video of this length.
+
+    The ceiling is what the selector can actually produce - measured at roughly
+    one reel per minute of source, since clips cannot overlap. The suggestion is
+    well under that: taking every possible clip means taking the weak ones too.
+    """
+    minutes = max(0.5, seconds / 60.0)
+    ceiling = max(1, int(minutes))
+    suggested = max(3, min(30, int(round(minutes * 0.55))))
+    suggested = min(suggested, ceiling)
+
+    if minutes < 5:
+        why = "short video - only a few strong moments in it"
+    elif minutes < 15:
+        why = "about half the video, keeping the better moments"
+    elif minutes < 40:
+        why = "roughly half the video; ask for more if you want fuller coverage"
+    else:
+        why = "long video - this is already a lot of posts"
+    return suggested, ceiling, why
+
+
+def prompt_links(default_clips: int = 12) -> list[dict]:
+    """Ask for links one at a time, each with its own reel count.
+
+    Each link is looked up as it is entered, so the title confirms the right
+    video was pasted and the reel count can be suggested from its real length.
     """
     print()
-    print("  Paste your YouTube links - one per line.")
-    print("  You can paste several at once. Press Enter on an empty line to start.")
-    print()
+    print("  Paste one link at a time. After each, say how many reels you want")
+    print("  from it. Press Enter on an empty link to finish.")
 
-    lines: list[str] = []
+    entries: list[dict] = []
     while True:
+        print()
         try:
-            entry = input(f"    link {len(lines) + 1}: ").strip()
+            raw = input(f"    Link {len(entries) + 1}: ").strip()
         except EOFError:
             break
-        if not entry:
+        if not raw:
             break
-        lines.append(entry)
-    return lines
+
+        url = clean_url(raw.strip('"').strip("'"))
+        if any(e["url"] == url for e in entries):
+            print("      already in the list - skipped")
+            continue
+
+        print("      looking it up ...", end="\r")
+        info = probe(url)
+        if info is None:
+            print("      could not read that link - is it a real video URL?")
+            try:
+                keep = input("      Add it anyway? [y/N]: ").strip().lower()
+            except EOFError:
+                break
+            if keep not in ("y", "yes"):
+                continue
+            info = {"title": "(unknown)", "duration": 0.0}
+
+        minutes = info["duration"] / 60.0
+        suggested, ceiling, why = suggest_clips(info["duration"])
+        print(f"      {info['title'][:58]}")
+        print(f"      {minutes:.0f} min  ->  suggested {suggested} reels "
+              f"(max about {ceiling}) - {why}")
+
+        try:
+            answer = input(f"      How many reels? [{suggested}]: ").strip()
+        except EOFError:
+            answer = ""
+        try:
+            count = int(answer) if answer else suggested
+        except ValueError:
+            count = suggested
+        count = max(1, min(count, 60))
+        if count > ceiling:
+            print(f"      note: about {ceiling} is all this video can give - "
+                  f"you will get what exists")
+
+        entries.append({"url": url, "clips": count,
+                        "title": info["title"], "duration": info["duration"]})
+
+        try:
+            more = input("    Add another link? [Y/n]: ").strip().lower()
+        except EOFError:
+            break
+        if more in ("n", "no"):
+            break
+
+    if entries:
+        print()
+        print("  Queued:")
+        for i, e in enumerate(entries, 1):
+            print(f"    {i}. {e['clips']:>2} reels  {e['duration']/60:>5.0f} min  "
+                  f"{e['title'][:46]}")
+    return entries
 
 
 def video_id(url: str) -> str | None:

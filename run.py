@@ -385,8 +385,9 @@ def main(argv=None) -> int:
 
     links = batch.read_links(args.urls, args.links)
     if not links and sys.stdin is not None and sys.stdin.isatty():
-        # Nothing on the command line and someone is watching: just ask.
-        links = batch.read_links(batch.prompt_links(), None)
+        # Nothing on the command line and someone is watching: just ask, and
+        # let each link carry its own reel count.
+        links = batch.prompt_links(int(cfg["select"].get("clips", 12)))
     if not links:
         log("batch", "no links given. Pass URLs on the command line, "
                      "use --links links.txt, or run without arguments to be asked.")
@@ -404,10 +405,15 @@ def main(argv=None) -> int:
     results: list[dict] = []
 
     with batch.KeepAwake():
-        for i, url in enumerate(links, 1):
+        for i, item in enumerate(links, 1):
+            url = item["url"]
+            if item.get("clips"):
+                cfg["select"]["clips"] = int(item["clips"])
             print()
             print("=" * 68)
-            log("batch", f"[{i}/{len(links)}]  {url}")
+            log("batch", f"[{i}/{len(links)}]  {url}"
+                         + (f"   ({cfg['select']['clips']} reels)"
+                            if item.get("clips") else ""))
             print("=" * 68)
 
             if decide_existing(url, args) == "keep":

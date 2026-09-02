@@ -88,18 +88,36 @@ venv\Scripts\python.exe run.py --clips 12 --skip-existing --clean
 ```
 
 ```
-  Paste your YouTube links - one per line.
-  You can paste several at once. Press Enter on an empty line to start.
+    Link 1: https://www.youtube.com/watch?v=...
+      I ended the Jantar Mantar protest.
+      10 min  ->  suggested 6 reels (max about 10)
+      How many reels? [6]:
+    Add another link? [Y/n]: y
 
-    link 1: https://www.youtube.com/watch?v=...
-    link 2: https://youtu.be/...
-    link 3:
+    Link 2: ...
 ```
 
-A multi-line paste arrives as several lines, so a whole list goes in at once.
-`--links file.txt` reads them from a file instead. Either way duplicates are
-collapsed, playlist/radio parameters are stripped, and a URL is picked out of
-surrounding text.
+Each link is looked up as you paste it, so the title confirms you have the right
+video and the reel count is suggested from its real length. Every link keeps its
+own count.
+
+**How many reels should you ask for?** A video yields at most about one reel per
+minute — clips cannot overlap. The suggestion is a little over half of that,
+because taking every possible clip means taking the weak ones too:
+
+| Video length | Suggested | Ceiling |
+|---|---|---|
+| 5 min | 3 | 5 |
+| 10 min | 6 | 10 |
+| 17 min | 9 | 17 |
+| 25 min | 14 | 25 |
+| 43 min | 24 | 43 |
+
+Ask for more than the ceiling and you simply get what exists.
+
+`--links file.txt` reads them from a file instead, for scripted runs. Either way
+duplicates are collapsed, playlist/radio parameters are stripped, and a URL is
+picked out of surrounding text.
 
 Built to be left alone:
 
