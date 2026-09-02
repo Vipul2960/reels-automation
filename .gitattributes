@@ -1,0 +1,7 @@
+# Keep line endings consistent across machines.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.mp4 binary
+*.wav binary
+*.tflite binary
+*.onnx binary
