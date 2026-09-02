@@ -160,6 +160,15 @@ The vision models are downloaded from Google (MediaPipe) and OpenCV at setup and
 are not redistributed here. All sound effects are synthesised from noise and sine
 waves, so no samples are bundled or licensed.
 
+## Author
+
+Built by **Vipul Solanki**.
+
+- Telegram — [@the_vipul_solanki](https://t.me/the_vipul_solanki)
+- Instagram — [@thevipulsolanki](https://instagram.com/thevipulsolanki)
+
+Issues and pull requests welcome.
+
 ## Licence
 
 MIT — see [LICENSE](LICENSE).
