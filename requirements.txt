@@ -16,3 +16,7 @@ faster-whisper>=1.0
 
 # Optional - only used when a .anthropic_key file is present
 anthropic>=0.40
+
+# Optional - only used with --upload
+google-api-python-client>=2.100
+google-auth-oauthlib>=1.2

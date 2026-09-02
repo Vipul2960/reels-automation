@@ -25,12 +25,18 @@ set TARGET=%TARGET:"=%
 set "COUNT=12"
 set /p COUNT=  How many reels [12]: 
 
+set "UP="
+set /p UP=  Ask to upload each one to YouTube? [y/N]: 
+set "UPFLAG="
+if /i "%UP%"=="y"   set "UPFLAG=--upload"
+if /i "%UP%"=="yes" set "UPFLAG=--upload"
+
 echo.
 echo   Working. Leave this window open - progress shows below.
 echo   ------------------------------------------------
 echo.
 
-venv\Scripts\python.exe run.py "%TARGET%" --clips %COUNT%
+venv\Scripts\python.exe run.py "%TARGET%" --clips %COUNT% %UPFLAG%
 set "CODE=%ERRORLEVEL%"
 
 echo.

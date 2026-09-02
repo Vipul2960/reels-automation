@@ -139,6 +139,39 @@ Nothing else changes; the file is gitignored.
 
 ---
 
+## Optional: upload straight to YouTube
+
+`--upload` asks, for each finished reel, whether to publish it. Nothing is sent
+without a typed `y`.
+
+Set up once:
+
+1. <https://console.cloud.google.com> → new project
+2. **APIs & Services → Library** → enable *YouTube Data API v3*
+3. **OAuth consent screen** → External, add yourself as a test user
+4. **Credentials → Create credentials → OAuth client ID → Desktop app**
+5. Download the JSON and save it here as `client_secret.json`
+
+```bat
+venv\Scripts\python.exe run.py "URL" --clips 12 --upload
+```
+
+Two limits to know:
+
+- An upload costs **1600 of the 10,000 daily quota units** — about **6 uploads a
+  day** on a default project. The tool tracks this and stops rather than failing.
+- A project that has not passed Google's API audit has uploads **forced to
+  private**, whatever privacy is requested. Make them public in YouTube Studio,
+  or request an audit at
+  <https://support.google.com/youtube/contact/yt_api_form>.
+
+Uploaded files are remembered in `.youtube_uploads.json`, so re-running never
+double-posts.
+
+**Before automating this:** clips cut from someone else's video can earn
+copyright strikes on your channel, and three strikes deletes it. The prompt
+exists so every upload is a deliberate choice.
+
 ## Requirements
 
 - Python 3.12–3.14

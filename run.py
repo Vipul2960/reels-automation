@@ -17,7 +17,7 @@ from reels import captions
 from reels.analyze import analyze
 from reels.download import download, verify
 from reels.emphasis import mark_emphasis
-from reels import effects, sfx
+from reels import effects, sfx, upload as yt
 from reels.framing import apply_shake
 from reels.framing import plan as plan_framing
 from reels.pacing import retime_words, tighten
@@ -53,6 +53,8 @@ def parse_args(argv=None):
     p.add_argument("--dry-run", action="store_true", help="stop after choosing moments")
     p.add_argument("--only", type=int, help="render just this clip number")
     p.add_argument("--force", action="store_true", help="ignore cached download/transcript")
+    p.add_argument("--upload", action="store_true",
+                   help="after each reel, ask whether to upload it to YouTube")
     p.add_argument("--config", type=Path, help="alternate config.json")
     return p.parse_args(argv)
 
@@ -160,6 +162,29 @@ def output_folder(meta: dict) -> Path:
     folder.mkdir(parents=True, exist_ok=True)
     log("setup", f"output folder: {name}")
     return folder
+
+
+def maybe_upload(reel: Path, clip: dict, meta: dict, cfg: dict) -> None:
+    """Ask, then upload. Nothing leaves this machine without a typed yes."""
+    left = yt.quota_left() // yt.UPLOAD_COST
+    hook = (clip.get("hook") or clip.get("title") or reel.stem)[:70]
+    print()
+    print(f"    Upload this reel to YouTube?")
+    print(f"      file  : {reel.name}  ({reel.stat().st_size / 1e6:.1f} MB, "
+          f"{clip.get('duration', 0):.0f}s)")
+    print(f"      title : {hook}")
+    print(f"      quota : {left} upload(s) left today")
+    try:
+        answer = input("      [y/N]: ").strip().lower()
+    except EOFError:
+        answer = ""
+    if answer not in ("y", "yes"):
+        log("upload", "skipped")
+        return
+    try:
+        yt.upload(reel, clip, meta.get("title", ""), cfg)
+    except Exception as exc:
+        log("upload", f"failed: {exc}")
 
 
 def main(argv=None) -> int:
@@ -284,6 +309,9 @@ def main(argv=None) -> int:
                                 bed_path=bed_path, timeline=timeline)
             results.append({**c, "output": str(final),
                             "framing": frame_plan["decisions"]})
+
+            if args.upload:
+                maybe_upload(Path(final), c, meta, cfg)
         except Exception as exc:
             log("clip", f"#{idx} FAILED: {exc}")
             traceback.print_exc(limit=3)

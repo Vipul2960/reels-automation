@@ -158,5 +158,18 @@
     "glitch_strength": 1.5,
     "glitch_shift": 14,
     "glitch_slices": 3
+  },
+  "upload": {
+    "privacy": "public",
+    "category_id": 22,
+    "title_suffix": " #Shorts",
+    "tags": [
+      "shorts",
+      "reels",
+      "viral",
+      "trending"
+    ],
+    "credit_source": true,
+    "description_footer": ""
   }
 }

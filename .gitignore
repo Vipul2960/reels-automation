@@ -17,3 +17,6 @@ assets/sfx/*.wav
 # Secrets
 .anthropic_key
 *.key
+client_secret.json
+.youtube_token.json
+.youtube_uploads.json
