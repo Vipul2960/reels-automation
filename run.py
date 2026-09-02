@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import datetime
 import traceback
 from pathlib import Path
 
@@ -17,7 +18,7 @@ from reels import captions
 from reels.analyze import analyze
 from reels.download import download, verify
 from reels.emphasis import mark_emphasis
-from reels import details, effects, sfx, upload as yt
+from reels import batch, details, effects, sfx, upload as yt
 from reels.framing import apply_shake
 from reels.framing import plan as plan_framing
 from reels.pacing import retime_words, tighten
@@ -40,7 +41,10 @@ def _use_utf8_console() -> None:
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Turn a YouTube video into vertical reels.")
-    p.add_argument("url", help="YouTube video URL")
+    p.add_argument("urls", nargs="*", help="one or more YouTube video URLs")
+    p.add_argument("--links", type=Path,
+                   help="text file of URLs, one per line (blank lines and "
+                        "#comments ignored)")
     p.add_argument("--clips", type=int, help="how many reels to produce")
     p.add_argument("--min", dest="min_seconds", type=float, help="minimum reel length")
     p.add_argument("--max", dest="max_seconds", type=float, help="maximum reel length")
@@ -55,6 +59,13 @@ def parse_args(argv=None):
     p.add_argument("--force", action="store_true", help="ignore cached download/transcript")
     p.add_argument("--upload", action="store_true",
                    help="after each reel, ask whether to upload it to YouTube")
+    p.add_argument("--skip-existing", action="store_true",
+                   help="silently skip links whose reels already exist")
+    p.add_argument("--redo", action="store_true",
+                   help="rebuild links whose reels already exist")
+    p.add_argument("--clean", action="store_true",
+                   help="delete each downloaded source video once its reels "
+                        "are made (saves ~1 GB per video)")
     p.add_argument("--config", type=Path, help="alternate config.json")
     return p.parse_args(argv)
 
@@ -187,22 +198,15 @@ def maybe_upload(reel: Path, clip: dict, meta: dict, cfg: dict) -> None:
         log("upload", f"failed: {exc}")
 
 
-def main(argv=None) -> int:
-    _use_utf8_console()
-    args = parse_args(argv)
-    ensure_dirs()
-    cfg = apply_overrides(load_config(args.config), args)
-
-    encoder, _ = pick_encoder(cfg["output"].get("video_encoder", "auto"))
-    log("setup", f"video encoder: {encoder}")
-
-    meta = download(args.url, cfg, force=args.force)
+def process_one(url: str, cfg: dict, args) -> dict:
+    """Everything for a single link. Returns a batch result record."""
+    meta = download(url, cfg, force=args.force)
     transcript = get_transcript(meta, cfg, args)
 
     clips = select_clips(transcript, meta, cfg, use_ai=not args.no_ai)
     if not clips:
         log("select", "no usable moments found - try --no-ai or a longer video")
-        return 1
+        return {"url": url, "status": "failed", "note": "no usable moments"}
 
     print()
     log("select", f"{len(clips)} moments chosen:")
@@ -219,7 +223,8 @@ def main(argv=None) -> int:
 
     if args.dry_run:
         log("done", "dry run - nothing rendered")
-        return 0
+        return {"url": url, "status": "skipped", "folder": outdir.name,
+                "note": "dry run"}
 
     results = []
     for c in clips:
@@ -334,7 +339,105 @@ def main(argv=None) -> int:
               f"[{modes}]")
     print(f"    {'total':<10} {sum(r['duration'] for r in results):>5.0f}s  "
           f"{total_mb:>5.1f} MB")
-    return 0 if results else 1
+
+    if args.clean:
+        freed = batch.cleanup_source(meta)
+        if freed:
+            log("clean", f"removed the source video ({freed:.2f} GB freed)")
+
+    return {"url": url, "status": "done" if results else "failed",
+            "folder": outdir.name, "reels": len(results),
+            "note": "" if results else "nothing rendered"}
+
+
+def decide_existing(url: str, args) -> str:
+    """keep / redo for a link whose reels already exist.
+
+    A batch left running overnight must never sit on a question, so the flags
+    win outright and the prompt only appears when neither was given.
+    """
+    done, folder, count = batch.already_done(url)
+    if not done:
+        return "redo"
+    if args.skip_existing:
+        log("batch", f"already done ({count} reels in {folder}) - skipping")
+        return "keep"
+    if args.redo or args.force:
+        log("batch", f"already done ({count} reels) - rebuilding")
+        return "redo"
+
+    print()
+    print(f"    This video already has reels:")
+    print(f"      folder : {folder}")
+    print(f"      reels  : {count}")
+    try:
+        answer = input("    Make them again? [y/N]: ").strip().lower()
+    except EOFError:
+        answer = ""
+    return "redo" if answer in ("y", "yes") else "keep"
+
+
+def main(argv=None) -> int:
+    _use_utf8_console()
+    args = parse_args(argv)
+    ensure_dirs()
+    cfg = apply_overrides(load_config(args.config), args)
+
+    links = batch.read_links(args.urls, args.links)
+    if not links:
+        log("batch", "no links given. Pass URLs, or --links links.txt")
+        return 1
+
+    encoder, _ = pick_encoder(cfg["output"].get("video_encoder", "auto"))
+    log("setup", f"video encoder: {encoder}")
+    log("batch", f"{len(links)} link(s) queued")
+
+    free, needed = batch.disk_report(len(links))
+    log("batch", f"disk: {free:.0f} GB free, roughly {needed:.0f} GB needed"
+                 + ("" if free > needed * 1.5 else "  <-- tight, consider --clean"))
+
+    started = datetime.now()
+    results: list[dict] = []
+
+    with batch.KeepAwake():
+        for i, url in enumerate(links, 1):
+            print()
+            print("=" * 68)
+            log("batch", f"[{i}/{len(links)}]  {url}")
+            print("=" * 68)
+
+            if decide_existing(url, args) == "keep":
+                done, folder, count = batch.already_done(url)
+                results.append({"url": url, "status": "skipped",
+                                "folder": folder, "reels": count,
+                                "note": "already had reels"})
+                continue
+
+            try:
+                results.append(process_one(url, cfg, args))
+            except KeyboardInterrupt:
+                log("batch", "stopped by you")
+                results.append({"url": url, "status": "failed",
+                                "note": "interrupted"})
+                break
+            except Exception as exc:
+                # One bad link must not end the night.
+                log("batch", f"FAILED: {exc}")
+                traceback.print_exc(limit=3)
+                results.append({"url": url, "status": "failed",
+                                "note": str(exc)[:160]})
+
+    summary = batch.write_summary(results, started)
+    ok = [r for r in results if r["status"] == "done"]
+    reels = sum(r.get("reels", 0) for r in ok)
+
+    print()
+    print("=" * 68)
+    log("batch", f"finished: {len(ok)}/{len(links)} videos, {reels} reels, "
+                 f"{(datetime.now() - started).total_seconds() / 60:.0f} min")
+    print(f"    summary: {summary}")
+    print("=" * 68)
+    return 0 if ok else 1
 
 
 if __name__ == "__main__":

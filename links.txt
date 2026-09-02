@@ -1,0 +1,3 @@
+# One YouTube link per line. Lines starting with # are ignored.
+# Paste as many as you like, save, then run make-reels.bat and choose "many links".
+

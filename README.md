@@ -77,6 +77,28 @@ Guarantees the code actually enforces:
 
 ---
 
+## Many links at once
+
+Queue a night's work and read the summary in the morning.
+
+```bat
+venv\Scripts\python.exe run.py --links links.txt --clips 12 --skip-existing --clean
+```
+
+`links.txt` is one URL per line; blank lines and `#comments` are ignored, and a
+URL is picked out of surrounding text so a pasted list works. Duplicates are
+collapsed, and playlist/radio parameters are stripped.
+
+Built to be left alone:
+
+- Windows sleep is disabled for the run and restored afterwards.
+- A link that fails does not stop the batch — it is recorded and the run moves on.
+- `--skip-existing` passes over videos that already have reels, so nothing waits
+  on a question. Without it you are asked; with `--redo` they are rebuilt.
+- `--clean` deletes each source video once its reels exist, about 1 GB back per
+  video.
+- `output/batch-summary.txt` says what was done, skipped and failed.
+
 ## Options
 
 | Flag | Effect |
@@ -89,6 +111,10 @@ Guarantees the code actually enforces:
 | `--source whisper` | ignore YouTube captions, transcribe locally |
 | `--lang hi` | force the transcript language |
 | `--force` | ignore every cache and redo |
+| `--links f.txt` | read URLs from a file, one per line |
+| `--skip-existing` | pass over videos that already have reels |
+| `--redo` | rebuild videos that already have reels |
+| `--clean` | delete each source video after its reels are made |
 
 **How many reels can one video give?** Roughly one per minute of source. Measured:
 a 10-minute video tops out near 10, a 43-minute video near 40. Ask for more and
