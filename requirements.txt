@@ -1,0 +1,18 @@
+# Install into a virtualenv on Python 3.12-3.14:
+#   python -m venv venv
+#   venv\Scripts\python.exe -m pip install -r requirements.txt
+#   venv\Scripts\python.exe get_models.py
+#
+# ffmpeg and ffprobe must also be on PATH (https://ffmpeg.org/download.html).
+
+yt-dlp>=2025.1.1
+opencv-python>=4.10
+mediapipe>=0.10
+scenedetect>=0.6.4
+numpy>=2.0
+
+# Optional - only used when YouTube has no captions for a video
+faster-whisper>=1.0
+
+# Optional - only used when a .anthropic_key file is present
+anthropic>=0.40

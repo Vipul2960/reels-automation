@@ -1,0 +1,19 @@
+# Downloaded videos, cut clips, transcripts - gigabytes, all reproducible
+work/
+
+# Rendered reels
+output/
+
+# Python environment
+venv/
+__pycache__/
+*.pyc
+
+# Vision models - fetched by get_models.py, not redistributed here
+assets/*.tflite
+assets/*.onnx
+assets/sfx/*.wav
+
+# Secrets
+.anthropic_key
+*.key

@@ -1,0 +1,162 @@
+{
+  "output": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "video_encoder": "auto",
+    "quality": 23,
+    "audio_bitrate": "128k",
+    "stall_timeout": 120,
+    "max_fps": 30
+  },
+  "download": {
+    "max_height": 1080,
+    "prefer_h264": true,
+    "cookies_from_browser": null,
+    "download_attempts": 4
+  },
+  "transcribe": {
+    "source": "auto",
+    "min_caption_words": 200,
+    "model": "small",
+    "compute_type": "int8",
+    "language": null,
+    "beam_size": 1,
+    "vad_filter": true,
+    "caption_retries": 4
+  },
+  "select": {
+    "clips": 12,
+    "min_seconds": 20,
+    "max_seconds": 90,
+    "use_ai": true,
+    "ai_model": "claude-sonnet-5",
+    "pad_start": 0.35,
+    "pad_end": 0.45,
+    "spread": true,
+    "target_seconds": 45
+  },
+  "pacing": {
+    "enabled": true,
+    "min_dynamic_range_db": 12.0,
+    "floor_margin": 0.35,
+    "long_gap": 0.8,
+    "word_protect_max": 0.6,
+    "gap_quiet_margin_db": 2.5,
+    "max_silence": 0.22,
+    "keep_breath": 0.06,
+    "min_segment": 0.2,
+    "max_removed_fraction": 0.45,
+    "ramp_enabled": true,
+    "ramp_speed": 0.55,
+    "ramp_min_gap": 0.24,
+    "ramp_max_gap": 0.9,
+    "ramp_max_distance": 2.5
+  },
+  "motion": {
+    "punch_enabled": true,
+    "punch_zoom": 0.76,
+    "push_per_second": 0.01,
+    "min_zoom": 0.7,
+    "shake_enabled": true,
+    "shake_amplitude": 0.024,
+    "shake_seconds": 0.18,
+    "shake_hz": 22.0
+  },
+  "analysis": {
+    "sample_fps": 4.0,
+    "scene_threshold": 27.0,
+    "min_scene_seconds": 0.8,
+    "detect_width": 1280,
+    "face_min_confidence": 0.75,
+    "measure_speech": false,
+    "face_big_ratio": 0.012,
+    "text_ui_score": 0.42,
+    "motion_high": 6.0
+  },
+  "framing": {
+    "default_mode": "fit",
+    "deadzone_ratio": 0.06,
+    "smooth_alpha": 0.12,
+    "max_pan_px_per_sec": 160,
+    "wide_aspect": 0.8,
+    "pad_top_ratio": 0.32,
+    "pad_style": "blur",
+    "blur_strength": 26,
+    "safety_margin": 0.06,
+    "head_bias": 0.42,
+    "edge_margin": 0.05,
+    "object_max_width": 0.5
+  },
+  "subtitles": {
+    "enabled": true,
+    "font": "Arial Black",
+    "font_indic": "Nirmala UI",
+    "font_cjk": "Microsoft YaHei",
+    "font_rtl": "Segoe UI",
+    "font_size": 96,
+    "words_per_line": 3,
+    "primary_color": "&H00FFFFFF",
+    "highlight_color": "&H0000E5FF",
+    "outline_color": "&H00000000",
+    "outline": 6,
+    "shadow": 2,
+    "margin_v": "auto",
+    "uppercase": true,
+    "emphasis_enabled": true,
+    "emphasis_fraction": 0.18,
+    "emphasis_color": "&H0000C8FF",
+    "emphasis_scale": 112,
+    "pop_scale": 118,
+    "settle_scale": 106,
+    "pop_ms": 70,
+    "emoji_enabled": false,
+    "emoji_map": {}
+  },
+  "overlay": {
+    "hook_enabled": true,
+    "hook_font_size": 72,
+    "hook_margin_top": 190,
+    "hook_max_chars": 60
+  },
+  "grade": {
+    "enabled": true,
+    "contrast": 1.12,
+    "saturation": 1.28,
+    "brightness": 0.01,
+    "gamma": 0.98,
+    "sharpen": 0.6
+  },
+  "sfx": {
+    "enabled": false,
+    "whoosh_on_cuts": false,
+    "impact_on_emphasis": false,
+    "max_impacts": 4,
+    "impact_min_gap": 2.5,
+    "peak": 0.55,
+    "mix_gain": 0.34,
+    "duck_ratio": 4.0,
+    "duck_threshold": 0.06,
+    "gains": {
+      "whoosh": 0.6,
+      "impact": 1.0,
+      "riser": 0.7,
+      "pop": 0.5
+    }
+  },
+  "effects": {
+    "zoom_blur_on_cuts": true,
+    "zoom_blur_seconds": 0.22,
+    "zoom_blur_strength": 1.0,
+    "zoom_blur_samples": 6,
+    "zoom_blur_scale": 0.1,
+    "flash_on_cuts": true,
+    "flash_seconds": 0.05,
+    "flash_amount": 0.68,
+    "glitch_on_impacts": true,
+    "glitch_seconds": 0.13,
+    "glitch_strength": 1.5,
+    "glitch_shift": 14,
+    "glitch_slices": 3
+  }
+}
