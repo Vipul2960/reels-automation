@@ -74,6 +74,30 @@ def read_links(args_links: list[str], links_file: Path | None) -> list[str]:
     return out
 
 
+def prompt_links() -> list[str]:
+    """Ask for links right here, one per line, until a blank line.
+
+    Pasting into the terminal beats editing a file: a multi-line paste arrives
+    as several lines and each is taken as its own link, so a whole list can go
+    in at once.
+    """
+    print()
+    print("  Paste your YouTube links - one per line.")
+    print("  You can paste several at once. Press Enter on an empty line to start.")
+    print()
+
+    lines: list[str] = []
+    while True:
+        try:
+            entry = input(f"    link {len(lines) + 1}: ").strip()
+        except EOFError:
+            break
+        if not entry:
+            break
+        lines.append(entry)
+    return lines
+
+
 def video_id(url: str) -> str | None:
     import urllib.parse as up
     try:

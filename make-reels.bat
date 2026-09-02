@@ -16,11 +16,8 @@ set "MODE=1"
 set /p MODE=  Choose [1]:
 
 set "TARGET="
-set "LINKFLAG="
+if "%MODE%"=="2" goto OPTIONS
 
-if "%MODE%"=="2" goto MANY
-
-rem ---------------------------------------------------------------- one link
 echo.
 set /p TARGET=  Paste the link:
 if "%TARGET%"=="" (
@@ -30,43 +27,19 @@ if "%TARGET%"=="" (
   exit /b 1
 )
 set TARGET=%TARGET:"=%
-goto OPTIONS
 
-rem --------------------------------------------------------------- many links
-:MANY
-if not exist links.txt (
-  echo # One YouTube link per line. Lines starting with # are ignored.> links.txt
-  echo.>> links.txt
-)
-echo.
-echo   Opening links.txt - paste your links, one per line, then SAVE and CLOSE it.
-echo.
-start /wait notepad.exe links.txt
-set "LINKFLAG=--links links.txt"
-
-set "N=0"
-for /f "usebackq tokens=* delims=" %%L in ("links.txt") do (
-  set "LINE=%%L"
-  if not "!LINE!"=="" if not "!LINE:~0,1!"=="#" set /a N+=1
-)
-echo   %N% link^(s^) found.
-if "%N%"=="0" (
-  echo   Nothing to do. Closing.
-  pause
-  exit /b 1
-)
-
-rem ------------------------------------------------------------------ options
 :OPTIONS
 echo.
 set "COUNT=12"
 set /p COUNT=  How many reels per video [12]:
 
-set "UP="
-set /p UP=  Ask to upload each one to YouTube? [y/N]:
 set "UPFLAG="
-if /i "%UP%"=="y"   set "UPFLAG=--upload"
-if /i "%UP%"=="yes" set "UPFLAG=--upload"
+if not "%MODE%"=="2" (
+  set "UP="
+  set /p UP=  Ask to upload each one to YouTube? [y/N]:
+  if /i "!UP!"=="y"   set "UPFLAG=--upload"
+  if /i "!UP!"=="yes" set "UPFLAG=--upload"
+)
 
 set "SKIPFLAG="
 set "CLEANFLAG="
@@ -83,12 +56,12 @@ if "%MODE%"=="2" (
 )
 
 echo.
-echo   Working. Leave this window open - progress shows below.
 echo   ------------------------------------------------
-echo.
 
 if "%MODE%"=="2" (
-  venv\Scripts\python.exe run.py %LINKFLAG% --clips %COUNT% %UPFLAG% %SKIPFLAG% %CLEANFLAG%
+  rem No link on the command line, so run.py asks for them itself -
+  rem paste as many as you like, then press Enter on a blank line.
+  venv\Scripts\python.exe run.py --clips %COUNT% %SKIPFLAG% %CLEANFLAG%
 ) else (
   venv\Scripts\python.exe run.py "%TARGET%" --clips %COUNT% %UPFLAG%
 )

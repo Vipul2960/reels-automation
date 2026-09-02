@@ -81,13 +81,25 @@ Guarantees the code actually enforces:
 
 Queue a night's work and read the summary in the morning.
 
+Run it with no URL and it asks for them:
+
 ```bat
-venv\Scripts\python.exe run.py --links links.txt --clips 12 --skip-existing --clean
+venv\Scripts\python.exe run.py --clips 12 --skip-existing --clean
 ```
 
-`links.txt` is one URL per line; blank lines and `#comments` are ignored, and a
-URL is picked out of surrounding text so a pasted list works. Duplicates are
-collapsed, and playlist/radio parameters are stripped.
+```
+  Paste your YouTube links - one per line.
+  You can paste several at once. Press Enter on an empty line to start.
+
+    link 1: https://www.youtube.com/watch?v=...
+    link 2: https://youtu.be/...
+    link 3:
+```
+
+A multi-line paste arrives as several lines, so a whole list goes in at once.
+`--links file.txt` reads them from a file instead. Either way duplicates are
+collapsed, playlist/radio parameters are stripped, and a URL is picked out of
+surrounding text.
 
 Built to be left alone:
 

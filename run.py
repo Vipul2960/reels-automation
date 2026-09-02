@@ -384,8 +384,12 @@ def main(argv=None) -> int:
     cfg = apply_overrides(load_config(args.config), args)
 
     links = batch.read_links(args.urls, args.links)
+    if not links and sys.stdin is not None and sys.stdin.isatty():
+        # Nothing on the command line and someone is watching: just ask.
+        links = batch.read_links(batch.prompt_links(), None)
     if not links:
-        log("batch", "no links given. Pass URLs, or --links links.txt")
+        log("batch", "no links given. Pass URLs on the command line, "
+                     "use --links links.txt, or run without arguments to be asked.")
         return 1
 
     encoder, _ = pick_encoder(cfg["output"].get("video_encoder", "auto"))
