@@ -17,7 +17,7 @@ from reels import captions
 from reels.analyze import analyze
 from reels.download import download, verify
 from reels.emphasis import mark_emphasis
-from reels import effects, sfx, upload as yt
+from reels import details, effects, sfx, upload as yt
 from reels.framing import apply_shake
 from reels.framing import plan as plan_framing
 from reels.pacing import retime_words, tighten
@@ -318,6 +318,8 @@ def main(argv=None) -> int:
 
     write_json(outdir / "report.json",
                {"video": meta, "clips": results})
+    if results:
+        details.write_details(outdir, results, meta, cfg, transcript)
 
     print()
     log("done", f"{len(results)}/{len(clips)} reels written")
