@@ -60,8 +60,8 @@ def main() -> int:
             print("A run looks active right now:")
             for r in reasons:
                 print(f"  - {r}")
-            print("
-Deleting now would break it. Wait for it to finish, or pass")
+            print()
+            print("Deleting now would break it. Wait for it to finish, or pass")
             print("--force if you are sure nothing is running.")
             return 1
 
