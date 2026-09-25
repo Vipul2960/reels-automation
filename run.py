@@ -395,6 +395,17 @@ def main(argv=None) -> int:
 
     encoder, _ = pick_encoder(cfg["output"].get("video_encoder", "auto"))
     log("setup", f"video encoder: {encoder}")
+
+    # Say this now, not after an hour of rendering: --upload is useless without
+    # the Google credentials file, and the old code only found that out when the
+    # first finished reel was offered for upload.
+    if args.upload and not yt.CLIENT_SECRET.exists():
+        log("upload", f"WARNING: {yt.CLIENT_SECRET.name} is missing, so nothing "
+                      f"can be uploaded.")
+        log("upload", "Reels will still be made; see README 'upload straight to "
+                      "YouTube' for the one-time Google Cloud setup.")
+        args.upload = False
+
     log("batch", f"{len(links)} link(s) queued")
 
     free, needed = batch.disk_report(len(links))
